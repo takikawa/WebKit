@@ -37,10 +37,25 @@ export const type = Object.keys(description.type);
 const _typeSet = new Set(type);
 export const isValidType = v => _typeSet.has(v);
 export const typeValue = _mapValues(description.type);
+const _heapTypeSet = new Set(description.heap_type);
+export const isValidHeapType = v => _heapTypeSet.has(v);
+const _isValidRef = ({ ref }) => {
+    return typeof ref === "number" || _heapTypeSet.has(ref);
+}
 const _valueTypeSet = new Set(description.value_type);
-export const isValidValueType = v => _valueTypeSet.has(v);
+export const isValidValueType = v => {
+    if (typeof v === "string") {
+        return _valueTypeSet.has(v);
+    } else
+        return _isValidRef(v);
+}
 const _blockTypeSet = new Set(description.block_type);
-export const isValidBlockType = v => _blockTypeSet.has(v);
+export const isValidBlockType = v => {
+    if (typeof v === "string") {
+        return _blockTypeSet.has(v);
+    } else
+        return _isValidRef(v);
+}
 const _refTypeSet = new Set(description.ref_type);
 export const isValidRefType = v => _refTypeSet.has(v);
 export const externalKindValue = _mapValues(description.external_kind);

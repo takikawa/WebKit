@@ -80,6 +80,9 @@ inline bool isValueType(Type type)
 
 inline bool isSubtype(Type sub, Type parent)
 {
+    if (sub.nullable && !parent.nullable)
+        return false;
+
     if (sub.isTypeIdx() && parent.isFuncref())
         return true;
 
@@ -89,6 +92,17 @@ inline bool isSubtype(Type sub, Type parent)
 inline bool isRefType(Type type)
 {
     return type.isFuncref() || type.isExternref() || type.isTypeIdx();
+}
+
+inline bool isValidHeapTypeKind(TypeKind kind) {
+    switch (kind) {
+    case TypeKind::Funcref:
+    case TypeKind::Externref:
+        return true;
+    default:
+        break;
+    }
+    return false;
 }
 
 enum class ExternalKind : uint8_t {

@@ -216,6 +216,7 @@ using SignatureIndex = uintptr_t;
 
 struct Type {
     TypeKind kind;
+    bool nullable;
     SignatureIndex index;
 
     bool operator==(const Type& other) const
@@ -235,7 +236,7 @@ struct Type {
 
 namespace Types
 {
-#define CREATE_CONSTANT(name, id, ...) constexpr Type name = Type{TypeKind::name, 0u};
+#define CREATE_CONSTANT(name, id, ...) constexpr Type name = Type{TypeKind::name, true, 0u};
 FOR_EACH_WASM_TYPE(CREATE_CONSTANT)
 #undef CREATE_CONSTANT
 } // namespace Types

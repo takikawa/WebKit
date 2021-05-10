@@ -102,6 +102,8 @@ JSC_DEFINE_HOST_FUNCTION(callWebAssemblyFunction, (JSGlobalObject* globalObject,
             break;
         case Wasm::TypeKind::Void:
         case Wasm::TypeKind::Func:
+        case Wasm::TypeKind::RefNull:
+        case Wasm::TypeKind::Ref:
             RELEASE_ASSERT_NOT_REACHED();
         }
         RETURN_IF_EXCEPTION(scope, encodedJSValue());

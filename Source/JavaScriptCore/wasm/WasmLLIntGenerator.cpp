@@ -557,6 +557,8 @@ auto LLIntGenerator::callInformationForCaller(const Signature& signature) -> LLI
             break;
         case TypeKind::Void:
         case TypeKind::Func:
+        case TypeKind::RefNull:
+        case TypeKind::Ref:
             RELEASE_ASSERT_NOT_REACHED();
         }
     };
@@ -613,6 +615,8 @@ auto LLIntGenerator::callInformationForCaller(const Signature& signature) -> LLI
             break;
         case TypeKind::Void:
         case TypeKind::Func:
+        case TypeKind::RefNull:
+        case TypeKind::Ref:
             RELEASE_ASSERT_NOT_REACHED();
         }
     }
@@ -641,6 +645,8 @@ auto LLIntGenerator::callInformationForCaller(const Signature& signature) -> LLI
             break;
         case TypeKind::Void:
         case TypeKind::Func:
+        case TypeKind::RefNull:
+        case TypeKind::Ref:
             RELEASE_ASSERT_NOT_REACHED();
         }
     }
@@ -697,6 +703,8 @@ auto LLIntGenerator::callInformationForCallee(const Signature& signature) -> Vec
             break;
         case TypeKind::Void:
         case TypeKind::Func:
+        case TypeKind::RefNull:
+        case TypeKind::Ref:
             RELEASE_ASSERT_NOT_REACHED();
         }
     }
@@ -746,6 +754,8 @@ auto LLIntGenerator::addArguments(const Signature& signature) -> PartialResult
             break;
         case TypeKind::Void:
         case TypeKind::Func:
+        case TypeKind::RefNull:
+        case TypeKind::Ref:
             RELEASE_ASSERT_NOT_REACHED();
         }
     }

@@ -57,6 +57,23 @@ const putTable = (bin, {initial, maximum, element}) => {
 
 const valueType = WASM.description.type.i32.type
 
+const putValueType = (bin, type) => {
+    if (typeof type === "string")
+        put(bin, valueType, WASM.typeValue[type]);
+    else {
+        const { nullable, ref } = type;
+        if (nullable)
+            put(bin, valueType, WASM.typeValue["ref_null"]);
+        else
+            put(bin, valueType, WASM.typeValue["ref"]);
+        if (typeof ref === "string") {
+            assert.truthy(WASM.isValidHeapType(ref), "We expect 'ref' to be a valid heap type. It was " + ref);
+            put(bin, "varint7", WASM.typeValue[ref]);
+        } else
+            put(bin, "varint32", ref);
+    }
+}
+
 const putGlobalType = (bin, global) => {
     put(bin, valueType, WASM.typeValue[global.type]);
     put(bin, "uint8", global.mutability);
@@ -110,12 +127,12 @@ const emitters = {
             put(bin, "varint7", WASM.typeValue["func"]);
             put(bin, "varuint32", entry.params.length);
             for (const param of entry.params)
-                put(bin, "varint7", WASM.typeValue[param]);
+                putValueType(bin, param);
             if (entry.ret === "void")
                 put(bin, "varuint1", 0);
             else {
                 put(bin, "varuint1", 1);
-                put(bin, "varint7", WASM.typeValue[entry.ret]);
+                putValueType(bin, entry.ret);
             }
         }
     },
