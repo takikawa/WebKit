@@ -391,7 +391,12 @@ void ScriptModuleLoader::notifyFinished(ModuleScriptLoader& moduleScriptLoader, 
             return;
         }
 
-        if (!MIMETypeRegistry::isSupportedJavaScriptMIMEType(cachedScript.response().mimeType())) {
+        bool moduleIsJavaScript = true;
+        if (MIMETypeRegistry::isSupportedJavaScriptMIMEType(cachedScript.response().mimeType())) {
+            moduleIsJavaScript = true;
+        } else if (MIMETypeRegistry::isSupportedWebAssemblyMIMEType(cachedScript.response().mimeType())) {
+            moduleIsJavaScript = false;
+        } else {
             // https://html.spec.whatwg.org/multipage/webappapis.html#fetch-a-single-module-script
             // The result of extracting a MIME type from response's header list (ignoring parameters) is not a JavaScript MIME type.
             // For historical reasons, fetching a classic script does not include MIME type checking. In contrast, module scripts will fail to load if they are not of a correct MIME type.
@@ -410,8 +415,16 @@ void ScriptModuleLoader::notifyFinished(ModuleScriptLoader& moduleScriptLoader, 
         URL responseURL = canonicalizeAndRegisterResponseURL(cachedScript.response().url(), cachedScript.hasRedirections(), cachedScript.response().source());
         m_requestURLToResponseURLMap.add(sourceURL.string(), WTFMove(responseURL));
         promise->resolveWithCallback([&] (JSDOMGlobalObject& jsGlobalObject) {
-            return JSC::JSSourceCode::create(jsGlobalObject.vm(),
-                JSC::SourceCode { ScriptSourceCode { &cachedScript, JSC::SourceProviderSourceType::Module, loader.scriptFetcher() }.jsSourceCode() });
+            if (moduleIsJavaScript) {
+                return JSC::JSSourceCode::create(jsGlobalObject.vm(),
+                    JSC::SourceCode { ScriptSourceCode { &cachedScript, JSC::SourceProviderSourceType::Module, loader.scriptFetcher() }.jsSourceCode() });
+            } else {
+                //URL url = cachedScript.response().url();
+                //return JSC::JSSourceCode::create(jsGlobalObject.vm(),
+                //    JSC::SourceCode { ScriptSourceCode { *cachedScript.resourceBuffer(), WTFMove(url), loader.scriptFetcher() }.jsSourceCode() });
+                return JSC::JSSourceCode::create(jsGlobalObject.vm(),
+                    JSC::SourceCode { ScriptSourceCode { &cachedScript, loader.scriptFetcher() }.jsSourceCode() });
+            }
         });
     } else {
         auto& loader = static_cast<WorkerModuleScriptLoader&>(moduleScriptLoader);
@@ -434,7 +447,13 @@ void ScriptModuleLoader::notifyFinished(ModuleScriptLoader& moduleScriptLoader, 
             return;
         }
 
-        if (!MIMETypeRegistry::isSupportedJavaScriptMIMEType(loader.responseMIMEType())) {
+        // FIXME: perhaps do this in a better way
+        bool moduleIsJavaScript = true;
+        if (MIMETypeRegistry::isSupportedJavaScriptMIMEType(loader.responseMIMEType())) {
+            moduleIsJavaScript = true;
+        } else if (MIMETypeRegistry::isSupportedWebAssemblyMIMEType(loader.responseMIMEType())) {
+            moduleIsJavaScript = false;
+        } else {
             // https://html.spec.whatwg.org/multipage/webappapis.html#fetch-a-single-module-script
             // The result of extracting a MIME type from response's header list (ignoring parameters) is not a JavaScript MIME type.
             // For historical reasons, fetching a classic script does not include MIME type checking. In contrast, module scripts will fail to load if they are not of a correct MIME type.
@@ -458,8 +477,14 @@ void ScriptModuleLoader::notifyFinished(ModuleScriptLoader& moduleScriptLoader, 
         }
         m_requestURLToResponseURLMap.add(sourceURL.string(), responseURL);
         promise->resolveWithCallback([&] (JSDOMGlobalObject& jsGlobalObject) {
-            return JSC::JSSourceCode::create(jsGlobalObject.vm(),
-                JSC::SourceCode { ScriptSourceCode { loader.script(), WTFMove(responseURL), { }, JSC::SourceProviderSourceType::Module, loader.scriptFetcher() }.jsSourceCode() });
+            if (moduleIsJavaScript) {
+                return JSC::JSSourceCode::create(jsGlobalObject.vm(),
+                    JSC::SourceCode { ScriptSourceCode { loader.script(), WTFMove(responseURL), { }, JSC::SourceProviderSourceType::Module, loader.scriptFetcher() }.jsSourceCode() });
+
+            } else {
+                return JSC::JSSourceCode::create(jsGlobalObject.vm(),
+                    JSC::SourceCode { ScriptSourceCode { *loader.script().buffer(), WTFMove(responseURL), loader.scriptFetcher() }.jsSourceCode() });
+            }
         });
     }
 }
