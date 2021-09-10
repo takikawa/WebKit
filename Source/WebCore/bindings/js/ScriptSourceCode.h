@@ -64,13 +64,6 @@ public:
     {
     }
 
-    ScriptSourceCode(CachedScript* cachedScript, Ref<CachedScriptFetcher>&& scriptFetcher)
-        : m_provider(JSC::WebAssemblySourceProvider::create(cachedScript->resourceBuffer()->copyData(), JSC::SourceOrigin { cachedScript->response().url(), WTFMove(scriptFetcher) }, cachedScript->response().url().string()))
-        , m_code(m_provider.copyRef())
-        , m_cachedScript(cachedScript)
-    {
-    }
-
     ScriptSourceCode(const String& source, URL&& url, const TextPosition& startPosition, JSC::SourceProviderSourceType sourceType, Ref<JSC::ScriptFetcher>&& scriptFetcher)
         : m_provider(JSC::StringSourceProvider::create(source, JSC::SourceOrigin { url, WTFMove(scriptFetcher) }, url.string(), startPosition, sourceType))
         , m_code(m_provider.copyRef(), startPosition.m_line.oneBasedInt(), startPosition.m_column.oneBasedInt())
@@ -80,14 +73,6 @@ public:
     ScriptSourceCode(const ScriptBuffer& source, URL&& url, const TextPosition& startPosition, JSC::SourceProviderSourceType sourceType, Ref<JSC::ScriptFetcher>&& scriptFetcher)
         : m_provider(ScriptBufferSourceProvider::create(source, JSC::SourceOrigin { url, WTFMove(scriptFetcher) }, url.string(), startPosition, sourceType))
         , m_code(m_provider.copyRef(), startPosition.m_line.oneBasedInt(), startPosition.m_column.oneBasedInt())
-    {
-    }
-
-    // FIXME: ok to not have sourceType here?
-    ScriptSourceCode(const SharedBuffer& source, URL&& url, Ref<JSC::ScriptFetcher>&& scriptFetcher)
-        // FIXME: copyData() or extractData()?
-        : m_provider(JSC::WebAssemblySourceProvider::create(source.copyData(), JSC::SourceOrigin { url, WTFMove(scriptFetcher) }, url.string()))
-        , m_code(m_provider.copyRef())
     {
     }
 

@@ -39,6 +39,7 @@
 #include "ScriptController.h"
 #include "ScriptSourceCode.h"
 #include "SubresourceIntegrity.h"
+#include "WebAssemblyScriptSourceCode.h"
 #include "WebCoreJSClientData.h"
 #include "WorkerModuleScriptLoader.h"
 #include "WorkerOrWorkletGlobalScope.h"
@@ -419,11 +420,8 @@ void ScriptModuleLoader::notifyFinished(ModuleScriptLoader& moduleScriptLoader, 
                 return JSC::JSSourceCode::create(jsGlobalObject.vm(),
                     JSC::SourceCode { ScriptSourceCode { &cachedScript, JSC::SourceProviderSourceType::Module, loader.scriptFetcher() }.jsSourceCode() });
             } else {
-                //URL url = cachedScript.response().url();
-                //return JSC::JSSourceCode::create(jsGlobalObject.vm(),
-                //    JSC::SourceCode { ScriptSourceCode { *cachedScript.resourceBuffer(), WTFMove(url), loader.scriptFetcher() }.jsSourceCode() });
                 return JSC::JSSourceCode::create(jsGlobalObject.vm(),
-                    JSC::SourceCode { ScriptSourceCode { &cachedScript, loader.scriptFetcher() }.jsSourceCode() });
+                    JSC::SourceCode { WebAssemblyScriptSourceCode { &cachedScript, loader.scriptFetcher() }.jsSourceCode() });
             }
         });
     } else {
@@ -483,7 +481,7 @@ void ScriptModuleLoader::notifyFinished(ModuleScriptLoader& moduleScriptLoader, 
 
             } else {
                 return JSC::JSSourceCode::create(jsGlobalObject.vm(),
-                    JSC::SourceCode { ScriptSourceCode { *loader.script().buffer(), WTFMove(responseURL), loader.scriptFetcher() }.jsSourceCode() });
+                    JSC::SourceCode { WebAssemblyScriptSourceCode { *loader.script().buffer(), WTFMove(responseURL), loader.scriptFetcher() }.jsSourceCode() });
             }
         });
     }
