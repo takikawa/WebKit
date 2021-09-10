@@ -392,11 +392,11 @@ void ScriptModuleLoader::notifyFinished(ModuleScriptLoader& moduleScriptLoader, 
             return;
         }
 
-        bool moduleIsJavaScript = true;
+        ModuleType type = ModuleType::Invalid;
         if (MIMETypeRegistry::isSupportedJavaScriptMIMEType(cachedScript.response().mimeType())) {
-            moduleIsJavaScript = true;
+            type = ModuleType::JavaScript;
         } else if (MIMETypeRegistry::isSupportedWebAssemblyMIMEType(cachedScript.response().mimeType())) {
-            moduleIsJavaScript = false;
+            type = ModuleType::WebAssembly;
         } else {
             // https://html.spec.whatwg.org/multipage/webappapis.html#fetch-a-single-module-script
             // The result of extracting a MIME type from response's header list (ignoring parameters) is not a JavaScript MIME type.
@@ -416,7 +416,7 @@ void ScriptModuleLoader::notifyFinished(ModuleScriptLoader& moduleScriptLoader, 
         URL responseURL = canonicalizeAndRegisterResponseURL(cachedScript.response().url(), cachedScript.hasRedirections(), cachedScript.response().source());
         m_requestURLToResponseURLMap.add(sourceURL.string(), WTFMove(responseURL));
         promise->resolveWithCallback([&] (JSDOMGlobalObject& jsGlobalObject) {
-            if (moduleIsJavaScript) {
+            if (type == ModuleType::JavaScript) {
                 return JSC::JSSourceCode::create(jsGlobalObject.vm(),
                     JSC::SourceCode { ScriptSourceCode { &cachedScript, JSC::SourceProviderSourceType::Module, loader.scriptFetcher() }.jsSourceCode() });
             } else {
@@ -445,12 +445,11 @@ void ScriptModuleLoader::notifyFinished(ModuleScriptLoader& moduleScriptLoader, 
             return;
         }
 
-        // FIXME: perhaps do this in a better way
-        bool moduleIsJavaScript = true;
+        ModuleType type = ModuleType::Invalid;
         if (MIMETypeRegistry::isSupportedJavaScriptMIMEType(loader.responseMIMEType())) {
-            moduleIsJavaScript = true;
+            type = ModuleType::JavaScript;
         } else if (MIMETypeRegistry::isSupportedWebAssemblyMIMEType(loader.responseMIMEType())) {
-            moduleIsJavaScript = false;
+            type = ModuleType::WebAssembly;
         } else {
             // https://html.spec.whatwg.org/multipage/webappapis.html#fetch-a-single-module-script
             // The result of extracting a MIME type from response's header list (ignoring parameters) is not a JavaScript MIME type.
@@ -475,7 +474,7 @@ void ScriptModuleLoader::notifyFinished(ModuleScriptLoader& moduleScriptLoader, 
         }
         m_requestURLToResponseURLMap.add(sourceURL.string(), responseURL);
         promise->resolveWithCallback([&] (JSDOMGlobalObject& jsGlobalObject) {
-            if (moduleIsJavaScript) {
+            if (type == ModuleType::JavaScript) {
                 return JSC::JSSourceCode::create(jsGlobalObject.vm(),
                     JSC::SourceCode { ScriptSourceCode { loader.script(), WTFMove(responseURL), { }, JSC::SourceProviderSourceType::Module, loader.scriptFetcher() }.jsSourceCode() });
 
