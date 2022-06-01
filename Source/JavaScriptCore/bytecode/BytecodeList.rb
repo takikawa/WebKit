@@ -1910,4 +1910,41 @@ op :i31_get_u,
         ref: VirtualRegister,
     }
 
+op :array_new_canon,
+    args: {
+        dst: VirtualRegister,
+        size: VirtualRegister,
+        value: VirtualRegister,
+        typeIndex: unsigned,
+    }
+
+op :array_new_canon_default,
+    args: {
+        dst: VirtualRegister,
+        size: VirtualRegister,
+        typeIndex: unsigned,
+    }
+
+op :array_get,
+    args: {
+        dst: VirtualRegister,
+        arrayref: VirtualRegister,
+        index: VirtualRegister,
+        typeIndex: unsigned,
+    }
+
+op :array_set,
+    args: {
+        arrayref: VirtualRegister,
+        index: VirtualRegister,
+        value: VirtualRegister,
+        typeIndex: unsigned,
+    }
+
+op :array_len,
+    args: {
+        dst: VirtualRegister,
+        arrayref: VirtualRegister,
+    }
+
 end_section :Wasm

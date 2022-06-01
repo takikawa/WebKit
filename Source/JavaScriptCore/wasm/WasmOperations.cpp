@@ -34,6 +34,7 @@
 #include "JITExceptions.h"
 #include "JSCJSValueInlines.h"
 #include "JSGlobalObjectInlines.h"
+#include "JSWebAssemblyArray.h"
 #include "JSWebAssemblyException.h"
 #include "JSWebAssemblyHelpers.h"
 #include "JSWebAssemblyInstance.h"
@@ -1052,6 +1053,82 @@ JSC_DEFINE_JIT_OPERATION(operationWasmRetrieveAndClearExceptionIfCatchable, Poin
     UNUSED_PARAM(instance);
     return { nullptr, nullptr };
 #endif
+}
+
+JSC_DEFINE_JIT_OPERATION(operationWasmArrayNew, EncodedJSValue, (Instance* instance, uint32_t typeIndex, uint32_t size, EncodedJSValue encValue))
+{
+    JSWebAssemblyInstance* jsInstance = instance->owner<JSWebAssemblyInstance>();
+    JSGlobalObject* globalObject = jsInstance->globalObject();
+    VM& vm = globalObject->vm();
+
+    ASSERT(typeIndex < instance->module().moduleInformation().typeCount());
+
+    Wasm::TypeDefinition& arraySignature = instance->module().moduleInformation().typeSignatures[typeIndex];
+    ASSERT(arraySignature.is<ArrayType>());
+    Wasm::FieldType fieldType = arraySignature.as<ArrayType>()->elementType();
+
+    size_t elementSize;
+    switch (fieldType.type.kind) {
+    case Wasm::TypeKind::I32:
+    case Wasm::TypeKind::F32:
+        elementSize = sizeof(uint32_t);
+        break;
+    default:
+        elementSize = sizeof(uint64_t);
+        break;
+    }
+
+    FixedVector<uint8_t> values(size * elementSize);
+    if (elementSize == sizeof(uint32_t)) {
+        uint32_t* data = reinterpret_cast<uint32_t*>(values.data());
+        for (unsigned i = 0; i < size; i++) {
+            data[i] = static_cast<uint32_t>(encValue);
+        }
+    } else {
+        uint64_t* data = reinterpret_cast<uint64_t*>(values.data());
+        for (unsigned i = 0; i < size; i++) {
+            data[i] = static_cast<uint64_t>(encValue);
+        }
+    }
+
+    // FIXME: probably should store entire FieldType
+    JSWebAssemblyArray* array = JSWebAssemblyArray::create(vm, globalObject->webAssemblyArrayStructure(), fieldType.type, size, WTFMove(values));
+    return JSValue::encode(JSValue(array));
+}
+
+JSC_DEFINE_JIT_OPERATION(operationWasmArrayGet, EncodedJSValue, (Instance* instance, uint32_t typeIndex, EncodedJSValue arrayValue, uint32_t index))
+{
+    ASSERT(typeIndex < instance->module().moduleInformation().typeCount());
+
+#if ASSERT_ENABLED
+    Wasm::TypeDefinition& arraySignature = instance->module().moduleInformation().typeSignatures[typeIndex];
+    ASSERT(arraySignature.is<ArrayType>());
+#endif
+
+    JSValue arrayRef = JSValue::decode(arrayValue);
+    ASSERT(arrayRef.isObject());
+    JSWebAssemblyArray* arrayObject = jsCast<JSWebAssemblyArray*>(arrayRef.getObject());
+
+    return arrayObject->get(index);
+}
+
+JSC_DEFINE_JIT_OPERATION(operationWasmArraySet, void, (Instance* instance, uint32_t typeIndex, EncodedJSValue arrayValue, uint32_t index, EncodedJSValue value))
+{
+    ASSERT(typeIndex < instance->module().moduleInformation().typeCount());
+    JSWebAssemblyInstance* jsInstance = instance->owner<JSWebAssemblyInstance>();
+    JSGlobalObject* globalObject = jsInstance->globalObject();
+    VM& vm = globalObject->vm();
+
+#if ASSERT_ENABLED
+    Wasm::TypeDefinition& arraySignature = instance->module().moduleInformation().typeSignatures[typeIndex];
+    ASSERT(arraySignature.is<ArrayType>());
+#endif
+
+    JSValue arrayRef = JSValue::decode(arrayValue);
+    ASSERT(arrayRef.isObject());
+    JSWebAssemblyArray* arrayObject = jsCast<JSWebAssemblyArray*>(arrayRef.getObject());
+
+    arrayObject->set(vm, index, value);
 }
 
 } } // namespace JSC::Wasm
