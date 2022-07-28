@@ -661,6 +661,8 @@ auto LLIntGenerator::callInformationForCaller(const FunctionSignature& signature
         case TypeKind::Func:
         case TypeKind::Struct:
         case TypeKind::I31ref:
+        case TypeKind::Array:
+        case TypeKind::Arrayref:
             RELEASE_ASSERT_NOT_REACHED();
         }
     };
@@ -720,6 +722,8 @@ auto LLIntGenerator::callInformationForCaller(const FunctionSignature& signature
         case TypeKind::Func:
         case TypeKind::Struct:
         case TypeKind::I31ref:
+        case TypeKind::Array:
+        case TypeKind::Arrayref:
             RELEASE_ASSERT_NOT_REACHED();
         }
     }
@@ -750,7 +754,9 @@ auto LLIntGenerator::callInformationForCaller(const FunctionSignature& signature
         case TypeKind::Void:
         case TypeKind::Func:
         case TypeKind::Struct:
+        case TypeKind::Array:
         case TypeKind::I31ref:
+        case TypeKind::Arrayref:
             RELEASE_ASSERT_NOT_REACHED();
         }
     }
@@ -809,7 +815,9 @@ auto LLIntGenerator::callInformationForCallee(const FunctionSignature& signature
         case TypeKind::Void:
         case TypeKind::Func:
         case TypeKind::Struct:
+        case TypeKind::Array:
         case TypeKind::I31ref:
+        case TypeKind::Arrayref:
             RELEASE_ASSERT_NOT_REACHED();
         }
     }
@@ -862,6 +870,8 @@ auto LLIntGenerator::addArguments(const TypeDefinition& signature) -> PartialRes
         case TypeKind::Func:
         case TypeKind::Struct:
         case TypeKind::I31ref:
+        case TypeKind::Array:
+        case TypeKind::Arrayref:
             RELEASE_ASSERT_NOT_REACHED();
         }
     }

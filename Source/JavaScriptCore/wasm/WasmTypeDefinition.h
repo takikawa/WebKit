@@ -92,35 +92,61 @@ enum Mutability : uint8_t {
     Immutable = 0
 };
 
-struct StructField {
+struct FieldType {
     Type type;
     Mutability mutability;
 
-    bool operator==(const StructField& rhs) const { return type == rhs.type && mutability == rhs.mutability; }
-    bool operator!=(const StructField& rhs) const { return !(*this == rhs); }
+    bool operator==(const FieldType& rhs) const { return type == rhs.type && mutability == rhs.mutability; }
+    bool operator!=(const FieldType& rhs) const { return !(*this == rhs); }
 };
 
 class StructType {
 public:
-    StructType(StructField* payload, StructFieldCount fieldCount)
+    StructType(FieldType* payload, StructFieldCount fieldCount)
         : m_payload(payload)
         , m_fieldCount(fieldCount)
     {
     }
 
     StructFieldCount fieldCount() const { return m_fieldCount; }
-    StructField field(StructFieldCount i) const { return const_cast<StructType*>(this)->getField(i); }
+    FieldType field(StructFieldCount i) const { return const_cast<StructType*>(this)->getField(i); }
 
     WTF::String toString() const;
     void dump(WTF::PrintStream& out) const;
 
-    StructField& getField(StructFieldCount i) { ASSERT(i < fieldCount()); return *storage(i); }
-    StructField* storage(StructFieldCount i) { return i + m_payload; }
-    const StructField* storage(StructFieldCount i) const { return const_cast<StructType*>(this)->storage(i); }
+    FieldType& getField(StructFieldCount i) { ASSERT(i < fieldCount()); return *storage(i); }
+    FieldType* storage(StructFieldCount i) { return i + m_payload; }
+    const FieldType* storage(StructFieldCount i) const { return const_cast<StructType*>(this)->storage(i); }
 
 private:
-    StructField* m_payload;
+    FieldType* m_payload;
     StructFieldCount m_fieldCount;
+};
+
+class ArrayType {
+public:
+    ArrayType(FieldType* payload)
+        : m_payload(payload)
+    {
+    }
+
+    FieldType elementType() const { return const_cast<ArrayType*>(this)->getElementType(); }
+
+    WTF::String toString() const;
+    void dump(WTF::PrintStream& out) const;
+
+    FieldType& getElementType() { return *storage(); }
+    FieldType* storage() { return m_payload; }
+    const FieldType* storage() const { return const_cast<ArrayType*>(this)->storage(); }
+
+private:
+    FieldType* m_payload;
+};
+
+enum class TypeDefinitionKind : uint8_t {
+    FunctionSignature,
+    StructType,
+    ArrayType
 };
 
 class TypeDefinition : public ThreadSafeRefCounted<TypeDefinition> {
@@ -129,21 +155,30 @@ class TypeDefinition : public ThreadSafeRefCounted<TypeDefinition> {
     TypeDefinition() = delete;
     TypeDefinition(const TypeDefinition&) = delete;
 
-    TypeDefinition(FunctionArgCount retCount, FunctionArgCount argCount)
+    TypeDefinition(TypeDefinitionKind kind, FunctionArgCount retCount, FunctionArgCount argCount)
         : m_typeHeader { FunctionSignature { static_cast<Type*>(payload()), argCount, retCount } }
     {
+        RELEASE_ASSERT(kind == TypeDefinitionKind::FunctionSignature);
     }
 
-    TypeDefinition(StructFieldCount fieldCount)
-        : m_typeHeader { StructType { static_cast<StructField*>(payload()), fieldCount } }
+    TypeDefinition(TypeDefinitionKind kind, StructFieldCount fieldCount)
+        : m_typeHeader { StructType { static_cast<FieldType*>(payload()), fieldCount } }
     {
+        RELEASE_ASSERT(kind == TypeDefinitionKind::StructType);
+    }
+
+    TypeDefinition(TypeDefinitionKind kind)
+        : m_typeHeader { ArrayType { static_cast<FieldType*>(payload()) } }
+    {
+        RELEASE_ASSERT(kind == TypeDefinitionKind::ArrayType);
     }
 
     // Payload starts past end of this object.
     void* payload() { return this + 1; }
 
     static size_t allocatedFunctionSize(Checked<FunctionArgCount> retCount, Checked<FunctionArgCount> argCount) { return sizeof(TypeDefinition) + (retCount + argCount) * sizeof(Type); }
-    static size_t allocatedStructSize(Checked<StructFieldCount> fieldCount) { return sizeof(TypeDefinition) + fieldCount * sizeof(StructField); }
+    static size_t allocatedStructSize(Checked<StructFieldCount> fieldCount) { return sizeof(TypeDefinition) + fieldCount * sizeof(FieldType); }
+    static size_t allocatedArraySize() { return sizeof(TypeDefinition) + sizeof(FieldType); }
 
 public:
     template <typename T>
@@ -169,11 +204,13 @@ private:
     friend class TypeInformation;
     friend struct FunctionParameterTypes;
     friend struct StructParameterTypes;
+    friend struct ArrayParameterTypes;
 
     static RefPtr<TypeDefinition> tryCreateFunctionSignature(FunctionArgCount returnCount, FunctionArgCount argumentCount);
     static RefPtr<TypeDefinition> tryCreateStructType(StructFieldCount);
+    static RefPtr<TypeDefinition> tryCreateArrayType();
 
-    std::variant<FunctionSignature, StructType> m_typeHeader;
+    std::variant<FunctionSignature, StructType, ArrayType> m_typeHeader;
     // Payload is stored here.
 };
 
@@ -222,7 +259,8 @@ public:
     static TypeInformation& singleton();
 
     static RefPtr<TypeDefinition> typeDefinitionForFunction(const Vector<Type, 1>& returnTypes, const Vector<Type>& argumentTypes);
-    static RefPtr<TypeDefinition> typeDefinitionForStruct(const Vector<StructField>& fields);
+    static RefPtr<TypeDefinition> typeDefinitionForStruct(const Vector<FieldType>& fields);
+    static RefPtr<TypeDefinition> typeDefinitionForArray(FieldType);
     ALWAYS_INLINE const TypeDefinition* thunkFor(Type type) const { return thunkTypes[linearizeType(type.kind)]; }
 
     static const TypeDefinition& get(TypeIndex);
