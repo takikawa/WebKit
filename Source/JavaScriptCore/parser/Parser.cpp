@@ -3675,6 +3675,7 @@ template <class TreeBuilder> TreeStatement Parser<LexerType>::parseImportDeclara
     next();
 
     auto specifierList = context.createImportSpecifierList();
+    auto type = ImportDeclarationNode::ImportType::Normal;
 
     if (match(STRING)) {
         // import ModuleSpecifier ;
@@ -3690,20 +3691,30 @@ template <class TreeBuilder> TreeStatement Parser<LexerType>::parseImportDeclara
         }
 
         failIfFalse(autoSemiColon(), "Expected a ';' following a targeted import declaration");
-        return context.createImportDeclaration(importLocation, specifierList, moduleName, attributesList);
+        return context.createImportDeclaration(importLocation, type, specifierList, moduleName, attributesList);
     }
 
     bool isFinishedParsingImport = false;
     if (matchSpecIdentifier()) {
-        // ImportedDefaultBinding :
-        // ImportedBinding
-        auto specifier = parseImportClauseItem(context, ImportSpecifierType::DefaultImport);
-        failIfFalse(specifier, "Cannot parse the default import");
-        context.appendImportSpecifier(specifierList, specifier);
-        if (match(COMMA))
+        if (matchContextualKeyword(m_vm.propertyNames->deferKeyword)) {
+            // import defer NameSpaceImport FromClause ;
             next();
-        else
+            auto specifier = parseImportClauseItem(context, ImportSpecifierType::NamespaceImport);
+            failIfFalse(specifier, "Cannot parse the namespace import");
+            context.appendImportSpecifier(specifierList, specifier);
             isFinishedParsingImport = true;
+            type = ImportDeclarationNode::ImportType::Deferred;
+        } else {
+            // ImportedDefaultBinding :
+            // ImportedBinding
+            auto specifier = parseImportClauseItem(context, ImportSpecifierType::DefaultImport);
+            failIfFalse(specifier, "Cannot parse the default import");
+            context.appendImportSpecifier(specifierList, specifier);
+            if (match(COMMA))
+                next();
+            else
+                isFinishedParsingImport = true;
+        }
     }
 
     if (!isFinishedParsingImport) {
@@ -3749,7 +3760,7 @@ template <class TreeBuilder> TreeStatement Parser<LexerType>::parseImportDeclara
 
     failIfFalse(autoSemiColon(), "Expected a ';' following a targeted import declaration");
 
-    return context.createImportDeclaration(importLocation, specifierList, moduleName, attributesList);
+    return context.createImportDeclaration(importLocation, type, specifierList, moduleName, attributesList);
 }
 
 template <typename LexerType>
