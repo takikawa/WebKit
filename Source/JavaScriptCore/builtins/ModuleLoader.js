@@ -586,7 +586,7 @@ async function requestImportModule(moduleName, referrer, parameters, fetcher)
     var key = this.resolve(moduleName, referrer, fetcher);
     var entry = await this.requestSatisfy(this.ensureRegistered(key), parameters, fetcher, new @Set);
     await this.linkAndEvaluateModule(entry.key, fetcher);
-    return this.getModuleNamespaceObject(entry.module);
+    return this.getModuleNamespaceObject(entry.module, "evaluate");
 }
 
 @visibility=PrivateRecursive

@@ -168,7 +168,7 @@ void JSModuleRecord::instantiateDeclarations(JSGlobalObject* globalObject, Modul
         RETURN_IF_EXCEPTION(scope, void());
         switch (importEntry.type) {
         case AbstractModuleRecord::ImportEntryType::Namespace: {
-            JSModuleNamespaceObject* namespaceObject = importedModule->getModuleNamespace(globalObject);
+            JSModuleNamespaceObject* namespaceObject = importedModule->getModuleNamespace(globalObject, AbstractModuleRecord::ModulePhase::Evaluation);
             RETURN_IF_EXCEPTION(scope, void());
             bool putResult = false;
             symbolTablePutTouchWatchpointSet(moduleEnvironment, globalObject, importEntry.localName, namespaceObject, /* shouldThrowReadOnlyError */ false, /* ignoreReadOnlyErrors */ true, putResult);
@@ -194,7 +194,7 @@ void JSModuleRecord::instantiateDeclarations(JSGlobalObject* globalObject, Modul
 
             case Resolution::Type::Resolved: {
                 if (vm.propertyNames->starNamespacePrivateName == resolution.localName) {
-                    resolution.moduleRecord->getModuleNamespace(globalObject); // Force module namespace object materialization.
+                    resolution.moduleRecord->getModuleNamespace(globalObject, AbstractModuleRecord::ModulePhase::Evaluation); // Force module namespace object materialization.
                     RETURN_IF_EXCEPTION(scope, void());
                 }
                 break;

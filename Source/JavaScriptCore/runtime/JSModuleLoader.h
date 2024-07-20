@@ -84,7 +84,7 @@ public:
     JSValue evaluateNonVirtual(JSGlobalObject*, JSValue key, JSValue moduleRecord, JSValue scriptFetcher, JSValue sentValue, JSValue resumeMode);
 
     // Utility functions.
-    JSModuleNamespaceObject* getModuleNamespaceObject(JSGlobalObject*, JSValue moduleRecord);
+    JSModuleNamespaceObject* getModuleNamespaceObject(JSGlobalObject*, JSValue moduleRecord, JSValue phase);
     JSArray* dependencyKeysIfEvaluated(JSGlobalObject*, JSValue key);
 
 private:

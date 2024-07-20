@@ -78,7 +78,7 @@ void JSModuleLoader::finishCreation(JSGlobalObject* globalObject, VM& vm)
     JSMap* map = JSMap::create(vm, globalObject->mapStructure());
     putDirect(vm, Identifier::fromString(vm, "registry"_s), map);
 
-    JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("getModuleNamespaceObject"_s, moduleLoaderGetModuleNamespaceObject, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Private);
+    JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("getModuleNamespaceObject"_s, moduleLoaderGetModuleNamespaceObject, static_cast<unsigned>(PropertyAttribute::DontEnum), 2, ImplementationVisibility::Private);
     JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("parseModule"_s, moduleLoaderParseModule, static_cast<unsigned>(PropertyAttribute::DontEnum), 2, ImplementationVisibility::Private);
     JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("requestedModules"_s, moduleLoaderRequestedModules, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Private);
     JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("requestedModuleParameters"_s, moduleLoaderRequestedModuleParameters, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Private);
@@ -309,7 +309,7 @@ JSValue JSModuleLoader::evaluateNonVirtual(JSGlobalObject* globalObject, JSValue
     return jsUndefined();
 }
 
-JSModuleNamespaceObject* JSModuleLoader::getModuleNamespaceObject(JSGlobalObject* globalObject, JSValue moduleRecordValue)
+JSModuleNamespaceObject* JSModuleLoader::getModuleNamespaceObject(JSGlobalObject* globalObject, JSValue moduleRecordValue, JSValue phaseStringValue)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -320,7 +320,24 @@ JSModuleNamespaceObject* JSModuleLoader::getModuleNamespaceObject(JSGlobalObject
         return nullptr;
     }
 
-    RELEASE_AND_RETURN(scope, moduleRecord->getModuleNamespace(globalObject));
+    auto* phaseString = jsDynamicCast<JSString*>(phaseStringValue);
+    if (!phaseString) {
+        throwTypeError(globalObject, scope);
+        return nullptr;
+    }
+
+    auto modulePhase = AbstractModuleRecord::ModulePhase::Evaluation;
+    JSString* evalString = jsNontrivialString(vm, "evaluation"_s);
+    JSString* deferString = jsNontrivialString(vm, "defer"_s);
+
+    if (phaseString->equal(globalObject, deferString))
+        modulePhase = AbstractModuleRecord::ModulePhase::Defer;
+    else if (!phaseString->equal(globalObject, evalString)) {
+        throwTypeError(globalObject, scope);
+        return nullptr;
+    }
+
+    RELEASE_AND_RETURN(scope, moduleRecord->getModuleNamespace(globalObject, modulePhase));
 }
 
 // ------------------------------ Functions --------------------------------
@@ -474,7 +491,7 @@ JSC_DEFINE_HOST_FUNCTION(moduleLoaderGetModuleNamespaceObject, (JSGlobalObject* 
     auto* loader = jsDynamicCast<JSModuleLoader*>(callFrame->thisValue());
     if (!loader)
         return JSValue::encode(jsUndefined());
-    auto* moduleNamespaceObject = loader->getModuleNamespaceObject(globalObject, callFrame->argument(0));
+    auto* moduleNamespaceObject = loader->getModuleNamespaceObject(globalObject, callFrame->argument(0), callFrame->argument(1));
     RETURN_IF_EXCEPTION(scope, encodedJSValue());
     return JSValue::encode(moduleNamespaceObject);
 }

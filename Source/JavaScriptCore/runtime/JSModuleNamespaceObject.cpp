@@ -34,9 +34,10 @@ namespace JSC {
 
 const ClassInfo JSModuleNamespaceObject::s_info = { "ModuleNamespaceObject"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSModuleNamespaceObject) };
 
-JSModuleNamespaceObject::JSModuleNamespaceObject(VM& vm, Structure* structure)
+JSModuleNamespaceObject::JSModuleNamespaceObject(VM& vm, Structure* structure, bool isDeferred)
     : Base(vm, structure)
     , m_exports()
+    , m_isDeferred(isDeferred)
 {
 }
 
@@ -145,7 +146,7 @@ bool JSModuleNamespaceObject::getOwnPropertySlotCommon(JSGlobalObject* globalObj
             // 10. If binding.[[BindingName]] is "*namespace*", then
             //     a. Return ? GetModuleNamespace(targetModule).
             // We call getModuleNamespace() to ensure materialization. And after that, looking up the value from the scope to encourage module namespace object IC.
-            exportEntry.moduleRecord->getModuleNamespace(globalObject);
+            exportEntry.moduleRecord->getModuleNamespace(globalObject, AbstractModuleRecord::ModulePhase::Evaluation);
             RETURN_IF_EXCEPTION(scope, false);
         }
         JSModuleEnvironment* environment = exportEntry.moduleRecord->moduleEnvironment();

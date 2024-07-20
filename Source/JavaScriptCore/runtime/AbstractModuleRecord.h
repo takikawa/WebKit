@@ -141,7 +141,9 @@ public:
 
     AbstractModuleRecord* hostResolveImportedModule(JSGlobalObject*, const Identifier& moduleName);
 
-    JSModuleNamespaceObject* getModuleNamespace(JSGlobalObject*);
+    enum class ModulePhase { Evaluation, Defer };
+
+    JSModuleNamespaceObject* getModuleNamespace(JSGlobalObject*, ModulePhase);
     
     JSModuleEnvironment* moduleEnvironment()
     {
@@ -205,6 +207,7 @@ private:
     WriteBarrier<JSMap> m_dependenciesMap;
     
     WriteBarrier<JSModuleNamespaceObject> m_moduleNamespaceObject;
+    WriteBarrier<JSModuleNamespaceObject> m_moduleDeferredNamespaceObject;
 
     WriteBarrier<JSModuleEnvironment> m_moduleEnvironment;
 

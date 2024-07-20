@@ -745,14 +745,16 @@ static void getExportedNames(JSGlobalObject* globalObject, AbstractModuleRecord*
     }
 }
 
-JSModuleNamespaceObject* AbstractModuleRecord::getModuleNamespace(JSGlobalObject* globalObject)
+JSModuleNamespaceObject* AbstractModuleRecord::getModuleNamespace(JSGlobalObject* globalObject, ModulePhase phase)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     // http://www.ecma-international.org/ecma-262/6.0/#sec-getmodulenamespace
-    if (m_moduleNamespaceObject)
+    if (phase == ModulePhase::Evaluation && m_moduleNamespaceObject)
         return m_moduleNamespaceObject.get();
+    else if (phase == ModulePhase::Defer && m_moduleDeferredNamespaceObject)
+        return m_moduleDeferredNamespaceObject.get();
 
     IdentifierSet exportedNames;
     getExportedNames(globalObject, this, exportedNames);
@@ -781,7 +783,7 @@ JSModuleNamespaceObject* AbstractModuleRecord::getModuleNamespace(JSGlobalObject
         }
     }
 
-    auto* moduleNamespaceObject = JSModuleNamespaceObject::create(globalObject, globalObject->moduleNamespaceObjectStructure(), this, WTFMove(resolutions));
+    auto* moduleNamespaceObject = JSModuleNamespaceObject::create(globalObject, globalObject->moduleNamespaceObjectStructure(), this, WTFMove(resolutions), phase == ModulePhase::Defer);
     RETURN_IF_EXCEPTION(scope, nullptr);
 
     // Materialize *namespace* slot with module namespace object unless the module environment is not yet materialized, in which case we'll do it in setModuleEnvironment
@@ -792,7 +794,10 @@ JSModuleNamespaceObject* AbstractModuleRecord::getModuleNamespace(JSGlobalObject
         symbolTablePutTouchWatchpointSet(m_moduleEnvironment.get(), globalObject, vm.propertyNames->starNamespacePrivateName, moduleNamespaceObject, shouldThrowReadOnlyError, ignoreReadOnlyErrors, putResult);
         RETURN_IF_EXCEPTION(scope, nullptr);
     }
-    m_moduleNamespaceObject.set(vm, this, moduleNamespaceObject);
+    if (phase == ModulePhase::Evaluation)
+        m_moduleNamespaceObject.set(vm, this, moduleNamespaceObject);
+    else
+        m_moduleDeferredNamespaceObject.set(vm, this, moduleNamespaceObject);
 
     return moduleNamespaceObject;
 }
