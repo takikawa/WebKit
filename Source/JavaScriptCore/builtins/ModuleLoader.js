@@ -101,6 +101,7 @@ function newRegistryEntry(key)
         evaluated: false,
         then: @undefined,
         isAsync: false,
+        phase: "evaluation",
     };
 }
 
@@ -211,9 +212,13 @@ function requestInstantiate(entry, parameters, fetcher)
         var requestedModules = this.requestedModules(moduleRecord);
         var dependencies = @newArrayWithSize(requestedModules.length);
         for (var i = 0, length = requestedModules.length; i < length; ++i) {
-            var depName = requestedModules[i];
+            var depName = requestedModules[i].specifier;
+            //if (!depName || !(typeof depName === "string")) throw "foo";
             var depKey = this.resolve(depName, key, fetcher);
             var depEntry = this.ensureRegistered(depKey);
+            // FIXME: this is slightly wrong, a module can depend on another in multiple
+            //        phases at once
+            depEntry.phase = requestedModules[i].phase;
             @putByValDirect(dependencies, i, depEntry);
             dependenciesMap.@set(depName, depEntry);
         }
@@ -494,7 +499,9 @@ function moduleEvaluation(entry, fetcher)
         for (var i = 0, length = dependencies.length; i < length; ++i) {
             var dependency = dependencies[i];
             @assert(!dependency.isAsync);
-            this.moduleEvaluation(dependency, fetcher);
+            // FIXME: this needs to take async into account
+            if (dependency.phase !== "defer")
+                this.moduleEvaluation(dependency, fetcher);
         }
 
         this.evaluate(entry.key, entry.module, fetcher);

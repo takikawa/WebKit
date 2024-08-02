@@ -40,11 +40,12 @@ ModuleAnalyzer::ModuleAnalyzer(JSGlobalObject* globalObject, const Identifier& m
 {
 }
 
-void ModuleAnalyzer::appendRequestedModule(const Identifier& specifier, RefPtr<ScriptFetchParameters>&& attributes)
+void ModuleAnalyzer::appendRequestedModule(const Identifier& specifier, JSModuleRecord::ModulePhase phase, RefPtr<ScriptFetchParameters>&& attributes)
 {
+    // FIXME: this likely has to include the phase?
     auto result = m_requestedModules.add(specifier.impl());
     if (result.isNewEntry)
-        moduleRecord()->appendRequestedModule(specifier, WTFMove(attributes));
+        moduleRecord()->appendRequestedModule(specifier, phase, WTFMove(attributes));
 }
 
 void ModuleAnalyzer::exportVariable(ModuleProgramNode& moduleProgramNode, const RefPtr<UniquedStringImpl>& localName, const VariableEnvironmentEntry& variable)

@@ -168,7 +168,7 @@ void JSModuleRecord::instantiateDeclarations(JSGlobalObject* globalObject, Modul
         RETURN_IF_EXCEPTION(scope, void());
         switch (importEntry.type) {
         case AbstractModuleRecord::ImportEntryType::Namespace: {
-            JSModuleNamespaceObject* namespaceObject = importedModule->getModuleNamespace(globalObject, AbstractModuleRecord::ModulePhase::Evaluation);
+            JSModuleNamespaceObject* namespaceObject = importedModule->getModuleNamespace(globalObject, importEntry.phase);
             RETURN_IF_EXCEPTION(scope, void());
             bool putResult = false;
             symbolTablePutTouchWatchpointSet(moduleEnvironment, globalObject, importEntry.localName, namespaceObject, /* shouldThrowReadOnlyError */ false, /* ignoreReadOnlyErrors */ true, putResult);

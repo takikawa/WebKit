@@ -90,11 +90,13 @@ public:
     };
 
     enum class ImportEntryType { Single, Namespace };
+    enum class ModulePhase { Evaluation, Defer };
     struct ImportEntry {
         ImportEntryType type;
         Identifier moduleRequest;
         Identifier importName;
         Identifier localName;
+        ModulePhase phase;
     };
 
     typedef WTF::ListHashSet<RefPtr<UniquedStringImpl>, IdentifierRepHash> OrderedIdentifierSet;
@@ -103,12 +105,13 @@ public:
 
     struct ModuleRequest {
         RefPtr<UniquedStringImpl> m_specifier;
+        ModulePhase m_phase;
         RefPtr<ScriptFetchParameters> m_attributes;
     };
 
     DECLARE_EXPORT_INFO;
 
-    void appendRequestedModule(const Identifier&, RefPtr<ScriptFetchParameters>&&);
+    void appendRequestedModule(const Identifier&, ModulePhase, RefPtr<ScriptFetchParameters>&&);
     void addStarExportEntry(const Identifier&);
     void addImportEntry(const ImportEntry&);
     void addExportEntry(const ExportEntry&);
@@ -140,8 +143,6 @@ public:
     Resolution resolveImport(JSGlobalObject*, const Identifier& localName);
 
     AbstractModuleRecord* hostResolveImportedModule(JSGlobalObject*, const Identifier& moduleName);
-
-    enum class ModulePhase { Evaluation, Defer };
 
     JSModuleNamespaceObject* getModuleNamespace(JSGlobalObject*, ModulePhase);
     

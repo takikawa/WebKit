@@ -79,9 +79,9 @@ void AbstractModuleRecord::visitChildrenImpl(JSCell* cell, Visitor& visitor)
 
 DEFINE_VISIT_CHILDREN(AbstractModuleRecord);
 
-void AbstractModuleRecord::appendRequestedModule(const Identifier& moduleName, RefPtr<ScriptFetchParameters>&& attributes)
+void AbstractModuleRecord::appendRequestedModule(const Identifier& moduleName, ModulePhase phase, RefPtr<ScriptFetchParameters>&& attributes)
 {
-    m_requestedModules.append({ moduleName.impl(), WTFMove(attributes) });
+    m_requestedModules.append({ moduleName.impl(), phase, WTFMove(attributes) });
 }
 
 void AbstractModuleRecord::addStarExportEntry(const Identifier& moduleName)
@@ -878,7 +878,7 @@ void AbstractModuleRecord::dump()
 
     dataLog("    Dependencies: ", m_requestedModules.size(), " modules\n");
     for (const auto& request : m_requestedModules)
-        dataLogLn("      module(", printableName(request.m_specifier), "),attributes(", RawPointer(request.m_attributes.get()), ")");
+        dataLogLn("      module(", printableName(request.m_specifier), "),phase(", request.m_phase == ModulePhase::Evaluation ? "evaluation" : "defer", "),attributes(", RawPointer(request.m_attributes.get()), ")");
 
     dataLog("    Import: ", m_importEntries.size(), " entries\n");
     for (const auto& pair : m_importEntries) {

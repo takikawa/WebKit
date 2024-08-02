@@ -1,2 +1,2 @@
-import defer * as aNs from "./a.js";
-aNs.foo();
+//import defer * as aNs from "./a.js";
+//aNs.foo();

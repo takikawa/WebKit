@@ -412,7 +412,10 @@ JSC_DEFINE_HOST_FUNCTION(moduleLoaderRequestedModules, (JSGlobalObject* globalOb
     RETURN_IF_EXCEPTION(scope, encodedJSValue());
     size_t i = 0;
     for (auto& request : moduleRecord->requestedModules()) {
-        result->putDirectIndex(globalObject, i++, jsString(vm, String { request.m_specifier.get() }));
+        JSObject* record = constructEmptyObject(globalObject, globalObject->objectPrototype(), 2);
+        record->putDirect(vm, Identifier::fromString(vm, "specifier"_s), jsString(vm, String { request.m_specifier.get() }));
+        record->putDirect(vm, Identifier::fromString(vm, "phase"_s), jsNontrivialString(vm, request.m_phase == AbstractModuleRecord::ModulePhase::Evaluation ? "evaluation"_s : "defer"_s));
+        result->putDirectIndex(globalObject, i++, JSValue(record));
         RETURN_IF_EXCEPTION(scope, encodedJSValue());
     }
     return JSValue::encode(result);
