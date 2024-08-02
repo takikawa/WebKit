@@ -3699,6 +3699,7 @@ template <class TreeBuilder> TreeStatement Parser<LexerType>::parseImportDeclara
         if (matchContextualKeyword(m_vm.propertyNames->deferKeyword)) {
             // import defer NameSpaceImport FromClause ;
             next();
+            failIfFalse(match(TIMES), "Cannot parse the namespace import");
             auto specifier = parseImportClauseItem(context, ImportSpecifierType::NamespaceImport);
             failIfFalse(specifier, "Cannot parse the namespace import");
             context.appendImportSpecifier(specifierList, specifier);
