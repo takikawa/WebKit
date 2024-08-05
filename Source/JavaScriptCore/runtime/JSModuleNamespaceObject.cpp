@@ -118,6 +118,17 @@ static JSValue getValue(JSModuleEnvironment* environment, PropertyName localName
     return environment->variableAt(scopeOffset).get();
 }
 
+void JSModuleNamespaceObject::ensureDeferredNamespaceEvaluation(JSGlobalObject* globalObject)
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    ASSERT(m_isDeferred);
+    // FIXME: cyclic module record check
+    m_moduleRecord->evaluate(globalObject, jsUndefined(), jsNumber(static_cast<uint32_t>(JSGenerator::ResumeMode::NormalMode)));
+    RETURN_IF_EXCEPTION(scope, void());
+}
+
 bool JSModuleNamespaceObject::getOwnPropertySlotCommon(JSGlobalObject* globalObject, PropertyName propertyName, PropertySlot& slot)
 {
     VM& vm = globalObject->vm();
@@ -132,6 +143,12 @@ bool JSModuleNamespaceObject::getOwnPropertySlotCommon(JSGlobalObject* globalObj
         return Base::getOwnPropertySlot(this, globalObject, propertyName, slot);
 
     slot.setIsTaintedByOpaqueObject();
+
+    // FIXME: should this go before or after the setIsTaintedByOpaqueObject?
+    if (m_isDeferred) {
+        ensureDeferredNamespaceEvaluation(globalObject);
+        RETURN_IF_EXCEPTION(scope, false);
+    }
 
     auto iterator = m_exports.find(propertyName.uid());
     if (iterator == m_exports.end())

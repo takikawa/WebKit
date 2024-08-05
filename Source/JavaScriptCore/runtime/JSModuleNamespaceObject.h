@@ -73,6 +73,7 @@ private:
     JS_EXPORT_PRIVATE void finishCreation(JSGlobalObject*, AbstractModuleRecord*, Vector<std::pair<Identifier, AbstractModuleRecord::Resolution>>&&);
     DECLARE_VISIT_CHILDREN;
     bool getOwnPropertySlotCommon(JSGlobalObject*, PropertyName, PropertySlot&);
+    void ensureDeferredNamespaceEvaluation(JSGlobalObject*);
 
     struct ExportEntry {
         Identifier localName;

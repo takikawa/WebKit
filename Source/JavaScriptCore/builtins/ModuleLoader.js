@@ -210,15 +210,15 @@ function requestInstantiate(entry, parameters, fetcher)
         var moduleRecord = await this.parseModule(key, source);
         var dependenciesMap = moduleRecord.dependenciesMap;
         var requestedModules = this.requestedModules(moduleRecord);
+        var depPhases = this.requestedModulePhases(moduleRecord);
         var dependencies = @newArrayWithSize(requestedModules.length);
         for (var i = 0, length = requestedModules.length; i < length; ++i) {
-            var depName = requestedModules[i].specifier;
-            //if (!depName || !(typeof depName === "string")) throw "foo";
+            var depName = requestedModules[i];
             var depKey = this.resolve(depName, key, fetcher);
             var depEntry = this.ensureRegistered(depKey);
             // FIXME: this is slightly wrong, a module can depend on another in multiple
             //        phases at once
-            depEntry.phase = requestedModules[i].phase;
+            depEntry.phase = depPhases[i];
             @putByValDirect(dependencies, i, depEntry);
             dependenciesMap.@set(depName, depEntry);
         }
@@ -593,7 +593,7 @@ async function requestImportModule(moduleName, referrer, parameters, fetcher)
     var key = this.resolve(moduleName, referrer, fetcher);
     var entry = await this.requestSatisfy(this.ensureRegistered(key), parameters, fetcher, new @Set);
     await this.linkAndEvaluateModule(entry.key, fetcher);
-    return this.getModuleNamespaceObject(entry.module, "evaluate");
+    return this.getModuleNamespaceObject(entry.module, "evaluation");
 }
 
 @visibility=PrivateRecursive
