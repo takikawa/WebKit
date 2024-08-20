@@ -101,6 +101,7 @@ function newRegistryEntry(key)
         evaluated: false,
         then: @undefined,
         isAsync: false,
+        hasTLA: false,
         phase: "evaluation",
     };
 }
@@ -471,7 +472,8 @@ function link(entry, fetcher)
             hasAsyncDependency ||= dependency.isAsync;
         }
 
-        entry.isAsync = this.moduleDeclarationInstantiation(entry.module, fetcher) || hasAsyncDependency;
+        entry.hasTLA = this.moduleDeclarationInstantiation(entry.module, fetcher);
+        entry.isAsync = entry.hasTLA || hasAsyncDependency;
     } catch (error) {
         entry.linkSucceeded = false;
         entry.linkError = error;
@@ -510,12 +512,17 @@ function moduleEvaluation(entry, fetcher)
 }
 
 @visibility=PrivateRecursive
-async function asyncModuleEvaluation(entry, fetcher, dependencies)
+async function asyncModuleEvaluation(entry, fetcher, dependencies, deferred)
 {
     "use strict";
 
-    for (var i = 0, length = dependencies.length; i < length; ++i)
-        await this.moduleEvaluation(dependencies[i], fetcher);
+    for (var i = 0, length = dependencies.length; i < length; ++i) {
+        var dependency = dependencies[i];
+        if (dependency.phase === "defer")
+            await this.asyncModuleDeferredEvaluation(dependency, fetcher);
+        else
+            await this.moduleEvaluation(dependency, fetcher);
+    }
 
     var resumeMode = @GeneratorResumeModeNormal;
     while (true) {
@@ -531,6 +538,19 @@ async function asyncModuleEvaluation(entry, fetcher, dependencies)
             resumeMode = @GeneratorResumeModeThrow;
         }
     }
+}
+
+@visibility=PrivateRecursive
+async function asyncModuleDeferredEvaluation(entry, fetcher)
+{
+    "use strict";
+
+    if (entry.hasTLA)
+        return await this.moduleEvaluation(entry, fetcher);
+
+    var dependencies = entry.dependencies;
+    for (var i = 0, length = dependencies.length; i < length; ++i)
+        await this.asyncModuleDeferredEvaluation(dependencies[i], fetcher);
 }
 
 // APIs to control the module loader.
