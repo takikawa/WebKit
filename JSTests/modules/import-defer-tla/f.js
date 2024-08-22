@@ -1,4 +1,4 @@
 // f.js
 
 var global = (Function("return this"))();
-global.fEvaluated = true;
+global.fEvaluated = (global.fEvaluated || 0) + 1;
