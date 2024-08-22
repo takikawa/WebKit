@@ -501,7 +501,6 @@ function moduleEvaluation(entry, fetcher)
         for (var i = 0, length = dependencies.length; i < length; ++i) {
             var dependency = dependencies[i];
             @assert(!dependency.isAsync);
-            // FIXME: this needs to take async into account
             if (dependency.phase !== "defer")
                 this.moduleEvaluation(dependency, fetcher);
         }
@@ -512,7 +511,7 @@ function moduleEvaluation(entry, fetcher)
 }
 
 @visibility=PrivateRecursive
-async function asyncModuleEvaluation(entry, fetcher, dependencies, deferred)
+async function asyncModuleEvaluation(entry, fetcher, dependencies)
 {
     "use strict";
 
@@ -545,12 +544,20 @@ async function asyncModuleDeferredEvaluation(entry, fetcher)
 {
     "use strict";
 
-    if (entry.hasTLA)
-        return await this.moduleEvaluation(entry, fetcher);
-
     var dependencies = entry.dependencies;
     for (var i = 0, length = dependencies.length; i < length; ++i)
         await this.asyncModuleDeferredEvaluation(dependencies[i], fetcher);
+
+    if (entry.hasTLA) {
+        var awaitedValue = await this.moduleEvaluation(entry, fetcher);
+        entry.isAsync = false;
+        return awaitedValue;
+    }
+
+    // The isAsync flag is set to false because only sync module evaluations
+    // should remain in this part of the module graph at this point. When
+    // deferred evaluations are triggered, only the sync parts execute.
+    entry.isAsync = false;
 }
 
 // APIs to control the module loader.

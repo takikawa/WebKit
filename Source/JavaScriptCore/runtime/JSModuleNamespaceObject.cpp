@@ -125,7 +125,10 @@ void JSModuleNamespaceObject::ensureDeferredNamespaceEvaluation(JSGlobalObject* 
 
     ASSERT(m_isDeferred);
     // FIXME: cyclic module record check
-    m_moduleRecord->evaluate(globalObject, jsUndefined(), jsNumber(static_cast<uint32_t>(JSGenerator::ResumeMode::NormalMode)));
+
+    // This calls linkAndEvaluateModule instead of just evaluate in order to
+    // trigger evaluation for dependency modules as well.
+    globalObject->moduleLoader()->linkAndEvaluateModule(globalObject, identifierToJSValue(vm, m_moduleRecord->moduleKey()), jsUndefined());
     RETURN_IF_EXCEPTION(scope, void());
 }
 
