@@ -544,12 +544,19 @@ async function asyncModuleDeferredEvaluation(entry, fetcher)
 {
     "use strict";
 
+    // We only need to handle async evaluations here, and so we will never call
+    // this.moduleEvaluation here and thus we need to handle the evaluated flag.
+    if (entry.evaluated)
+        return;
+    if (entry.hasTLA)
+        entry.evaluated = true;
+
     var dependencies = entry.dependencies;
     for (var i = 0, length = dependencies.length; i < length; ++i)
         await this.asyncModuleDeferredEvaluation(dependencies[i], fetcher);
 
     if (entry.hasTLA) {
-        var awaitedValue = await this.moduleEvaluation(entry, fetcher);
+        var awaitedValue = await this.asyncModuleEvaluation(entry, fetcher, dependencies);
         entry.isAsync = false;
         return awaitedValue;
     }
