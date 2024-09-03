@@ -216,12 +216,10 @@ function requestInstantiate(entry, parameters, fetcher)
         for (var i = 0, length = requestedModules.length; i < length; ++i) {
             var depName = requestedModules[i];
             var depKey = this.resolve(depName, key, fetcher);
-            var depEntry = this.ensureRegistered(depKey);
-            // FIXME: this is slightly wrong, a module can depend on another in multiple
-            //        phases at once
-            depEntry.phase = depPhases[i];
+            var depRecord = this.ensureRegistered(depKey);
+            var depEntry = { "record": depRecord, "phase": depPhases[i] };
             @putByValDirect(dependencies, i, depEntry);
-            dependenciesMap.@set(depName, depEntry);
+            dependenciesMap.@set(depName, depRecord);
         }
         entry.dependencies = dependencies;
         entry.module = moduleRecord;
@@ -378,7 +376,7 @@ function requestSatisfyUtil(entry, parameters, fetcher, visited, satisfyingEntri
         var depLoads = this.requestedModuleParameters(entry.module);
         for (var i = 0, length = entry.dependencies.length; i < length; ++i) {
             var parameters = depLoads[i];
-            var depEntry = entry.dependencies[i];
+            var depEntry = entry.dependencies[i].record;
             var promise;
 
             // Recursive resolving. The dependencies of this entry is being resolved or already resolved.
@@ -467,7 +465,7 @@ function link(entry, fetcher)
         var hasAsyncDependency = false;
         var dependencies = entry.dependencies;
         for (var i = 0, length = dependencies.length; i < length; ++i) {
-            var dependency = dependencies[i];
+            var dependency = dependencies[i].record;
             this.link(dependency, fetcher);
             hasAsyncDependency ||= dependency.isAsync;
         }
@@ -500,9 +498,9 @@ function moduleEvaluation(entry, fetcher)
         // Since linking sets isAsync for any strongly connected component with an async module we should only get here if all our dependencies are also sync.
         for (var i = 0, length = dependencies.length; i < length; ++i) {
             var dependency = dependencies[i];
-            @assert(!dependency.isAsync);
+            @assert(!dependency.record.isAsync);
             if (dependency.phase !== "defer")
-                this.moduleEvaluation(dependency, fetcher);
+                this.moduleEvaluation(dependency.record, fetcher);
         }
 
         this.evaluate(entry.key, entry.module, fetcher);
@@ -518,9 +516,9 @@ async function asyncModuleEvaluation(entry, fetcher, dependencies)
     for (var i = 0, length = dependencies.length; i < length; ++i) {
         var dependency = dependencies[i];
         if (dependency.phase === "defer")
-            await this.asyncModuleDeferredEvaluation(dependency, fetcher);
+            await this.asyncModuleDeferredEvaluation(dependency.record, fetcher);
         else
-            await this.moduleEvaluation(dependency, fetcher);
+            await this.moduleEvaluation(dependency.record, fetcher);
     }
 
     var resumeMode = @GeneratorResumeModeNormal;
@@ -559,7 +557,7 @@ async function asyncModuleDeferredEvaluation(entry, fetcher)
     }
 
     for (var i = 0, length = dependencies.length; i < length; ++i)
-        await this.asyncModuleDeferredEvaluation(dependencies[i], fetcher);
+        await this.asyncModuleDeferredEvaluation(dependencies[i].record, fetcher);
 
     // The isAsync flag is set to false because only sync module evaluations
     // should remain in this part of the module graph at this point. When
