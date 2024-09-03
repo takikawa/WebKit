@@ -548,18 +548,18 @@ async function asyncModuleDeferredEvaluation(entry, fetcher)
     // this.moduleEvaluation here and thus we need to handle the evaluated flag.
     if (entry.evaluated)
         return;
-    if (entry.hasTLA)
-        entry.evaluated = true;
 
     var dependencies = entry.dependencies;
-    for (var i = 0, length = dependencies.length; i < length; ++i)
-        await this.asyncModuleDeferredEvaluation(dependencies[i], fetcher);
 
     if (entry.hasTLA) {
+        entry.evaluated = true;
         var awaitedValue = await this.asyncModuleEvaluation(entry, fetcher, dependencies);
         entry.isAsync = false;
         return awaitedValue;
     }
+
+    for (var i = 0, length = dependencies.length; i < length; ++i)
+        await this.asyncModuleDeferredEvaluation(dependencies[i], fetcher);
 
     // The isAsync flag is set to false because only sync module evaluations
     // should remain in this part of the module graph at this point. When
