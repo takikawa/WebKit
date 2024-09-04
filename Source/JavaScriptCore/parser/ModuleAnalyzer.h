@@ -55,7 +55,7 @@ private:
 
     VM& m_vm;
     JSModuleRecord* m_moduleRecord;
-    IdentifierSet m_requestedModules;
+    IdentifierMap m_requestedModules;
     std::tuple<ErrorType, String> m_errorMessage;
 };
 
