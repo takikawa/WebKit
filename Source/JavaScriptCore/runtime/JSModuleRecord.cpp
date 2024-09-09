@@ -267,4 +267,40 @@ JSValue JSModuleRecord::evaluate(JSGlobalObject* globalObject, JSValue sentValue
     return resultOrAwaitedValue;
 }
 
+bool JSModuleRecord::readyForSyncExecution(JSGlobalObject* globalObject)
+{
+    IdentifierSet seen;
+    Vector<AbstractModuleRecord*> stack;
+    stack.append(this);
+
+    while (!stack.isEmpty()) {
+        AbstractModuleRecord* currentModule = stack.takeLast();
+        if (seen.contains(currentModule->moduleKey().impl()))
+            return true;
+        seen.add(currentModule->moduleKey().impl());
+
+        if (JSModuleRecord* currentModule = jsDynamicCast<JSModuleRecord*>(currentModule)) {
+            JSValue state = currentModule->internalField(Field::State).get();
+
+            if (!state.isNumber())
+                return false;
+
+            if (state.asNumber() == static_cast<unsigned>(State::Completed))
+                return true;
+            else if (state.asNumber() == static_cast<unsigned>(State::Executing))
+                return false;
+
+            if (currentModule->m_moduleProgramExecutable->unlinkedCodeBlock()->isAsync())
+                return false;
+
+            for (unsigned i = 0; i < requestedModules().size(); i++) {
+                auto* requestedModule = currentModule->hostResolveImportedModule(globalObject, Identifier::fromUid(globalObject->vm(), requestedModules()[i].m_specifier.get()));
+                stack.append(requestedModule);
+            }
+        }
+    }
+
+    return true;
+}
+
 } // namespace JSC

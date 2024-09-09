@@ -124,7 +124,9 @@ void JSModuleNamespaceObject::ensureDeferredNamespaceEvaluation(JSGlobalObject* 
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     ASSERT(m_isDeferred);
-    // FIXME: cyclic module record check
+    if (JSModuleRecord* jsModule = jsDynamicCast<JSModuleRecord*>(moduleRecord()); jsModule && !jsModule->readyForSyncExecution(globalObject)) {
+        throwTypeError(globalObject, scope, "FIXME"_s);
+    }
 
     // This calls linkAndEvaluateModule instead of just evaluate in order to
     // trigger evaluation for dependency modules as well.
