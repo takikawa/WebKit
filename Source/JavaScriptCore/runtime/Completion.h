@@ -77,7 +77,7 @@ JS_EXPORT_PRIVATE JSInternalPromise* loadModule(JSGlobalObject*, const SourceCod
 // Link and evaluate the already linked module. This function is called in a sync manner.
 JS_EXPORT_PRIVATE JSValue linkAndEvaluateModule(JSGlobalObject*, const Identifier& moduleKey, JSValue scriptFetcher);
 
-JS_EXPORT_PRIVATE JSInternalPromise* importModule(JSGlobalObject*, const Identifier& moduleName, JSValue referrer, JSValue parameters, JSValue scriptFetcher);
+JS_EXPORT_PRIVATE JSInternalPromise* importModule(JSGlobalObject*, const Identifier& moduleName, JSValue referrer, JSValue phase, JSValue parameters, JSValue scriptFetcher);
 
 JS_EXPORT_PRIVATE UncheckedKeyHashMap<RefPtr<UniquedStringImpl>, String> retrieveImportAttributesFromDynamicImportOptions(JSGlobalObject*, JSValue, const Vector<RefPtr<UniquedStringImpl>>& supportedAssertions);
 JS_EXPORT_PRIVATE std::optional<ScriptFetchParameters::Type> retrieveTypeImportAttribute(JSGlobalObject*, const UncheckedKeyHashMap<RefPtr<UniquedStringImpl>, String>&);

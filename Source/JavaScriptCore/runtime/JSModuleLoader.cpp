@@ -219,7 +219,7 @@ JSValue JSModuleLoader::linkAndEvaluateModule(JSGlobalObject* globalObject, JSVa
     RELEASE_AND_RETURN(scope, call(globalObject, function, callData, this, arguments));
 }
 
-JSInternalPromise* JSModuleLoader::requestImportModule(JSGlobalObject* globalObject, const Identifier& moduleName, JSValue referrer, JSValue parameters, JSValue scriptFetcher)
+JSInternalPromise* JSModuleLoader::requestImportModule(JSGlobalObject* globalObject, const Identifier& moduleName, JSValue referrer, JSValue phase, JSValue parameters, JSValue scriptFetcher)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -232,6 +232,7 @@ JSInternalPromise* JSModuleLoader::requestImportModule(JSGlobalObject* globalObj
     MarkedArgumentBuffer arguments;
     arguments.append(jsString(vm, moduleName.string()));
     arguments.append(referrer);
+    arguments.append(phase);
     arguments.append(parameters);
     arguments.append(scriptFetcher);
     ASSERT(!arguments.hasOverflowed());
@@ -241,7 +242,7 @@ JSInternalPromise* JSModuleLoader::requestImportModule(JSGlobalObject* globalObj
     return jsCast<JSInternalPromise*>(promise);
 }
 
-JSInternalPromise* JSModuleLoader::importModule(JSGlobalObject* globalObject, JSString* moduleName, JSValue parameters, const SourceOrigin& referrer)
+JSInternalPromise* JSModuleLoader::importModule(JSGlobalObject* globalObject, JSString* moduleName, JSValue phase, JSValue parameters, const SourceOrigin& referrer)
 {
     dataLogLnIf(Options::dumpModuleLoadingState(), "Loader [import] ", printableModuleKey(globalObject, moduleName));
 
@@ -249,7 +250,7 @@ JSInternalPromise* JSModuleLoader::importModule(JSGlobalObject* globalObject, JS
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     if (globalObject->globalObjectMethodTable()->moduleLoaderImportModule)
-        RELEASE_AND_RETURN(scope, globalObject->globalObjectMethodTable()->moduleLoaderImportModule(globalObject, this, moduleName, parameters, referrer));
+        RELEASE_AND_RETURN(scope, globalObject->globalObjectMethodTable()->moduleLoaderImportModule(globalObject, this, moduleName, phase, parameters, referrer));
 
     auto* promise = JSInternalPromise::create(vm, globalObject->internalPromiseStructure());
     auto moduleNameString = moduleName->value(globalObject);
@@ -312,7 +313,7 @@ JSValue JSModuleLoader::evaluateNonVirtual(JSGlobalObject* globalObject, JSValue
     return jsUndefined();
 }
 
-JSModuleNamespaceObject* JSModuleLoader::getModuleNamespaceObject(JSGlobalObject* globalObject, JSValue moduleRecordValue, JSValue phaseStringValue)
+JSModuleNamespaceObject* JSModuleLoader::getModuleNamespaceObject(JSGlobalObject* globalObject, JSValue moduleRecordValue, JSValue phaseValue)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -323,22 +324,13 @@ JSModuleNamespaceObject* JSModuleLoader::getModuleNamespaceObject(JSGlobalObject
         return nullptr;
     }
 
-    auto* phaseString = jsDynamicCast<JSString*>(phaseStringValue);
-    if (!phaseString) {
-        throwTypeError(globalObject, scope);
-        return nullptr;
-    }
-
     auto modulePhase = AbstractModuleRecord::ModulePhase::Evaluation;
-    JSString* evalString = jsNontrivialString(vm, "evaluation"_s);
-    JSString* deferString = jsNontrivialString(vm, "defer"_s);
-
-    if (phaseString->equal(globalObject, deferString))
-        modulePhase = AbstractModuleRecord::ModulePhase::Defer;
-    else if (!phaseString->equal(globalObject, evalString)) {
+    // FIXME: more thorough error check?
+    if (!phaseValue.isUInt32()) {
         throwTypeError(globalObject, scope);
         return nullptr;
-    }
+    } else if (static_cast<Phase>(phaseValue.asUInt32()) == Phase::Defer)
+        modulePhase = AbstractModuleRecord::ModulePhase::Defer;
 
     RELEASE_AND_RETURN(scope, moduleRecord->getModuleNamespace(globalObject, modulePhase));
 }

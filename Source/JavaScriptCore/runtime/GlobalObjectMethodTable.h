@@ -53,7 +53,7 @@ struct GlobalObjectMethodTable {
     void (*queueMicrotaskToEventLoop)(JSGlobalObject&, Ref<Microtask>&&);
     bool (*shouldInterruptScriptBeforeTimeout)(const JSGlobalObject*);
 
-    JSInternalPromise* (*moduleLoaderImportModule)(JSGlobalObject*, JSModuleLoader*, JSString*, JSValue, const SourceOrigin&);
+    JSInternalPromise* (*moduleLoaderImportModule)(JSGlobalObject*, JSModuleLoader*, JSString*, JSValue, JSValue, const SourceOrigin&);
     Identifier (*moduleLoaderResolve)(JSGlobalObject*, JSModuleLoader*, JSValue, JSValue, JSValue);
     JSInternalPromise* (*moduleLoaderFetch)(JSGlobalObject*, JSModuleLoader*, JSValue, JSValue, JSValue);
     JSObject* (*moduleLoaderCreateImportMetaProperties)(JSGlobalObject*, JSModuleLoader*, JSValue, JSModuleRecord*, JSValue);

@@ -796,8 +796,10 @@ JSModuleNamespaceObject* AbstractModuleRecord::getModuleNamespace(JSGlobalObject
     }
     if (phase == ModulePhase::Evaluation)
         m_moduleNamespaceObject.set(vm, this, moduleNamespaceObject);
-    else
+    else if (phase == ModulePhase::Defer)
         m_moduleDeferredNamespaceObject.set(vm, this, moduleNamespaceObject);
+    else
+        RELEASE_ASSERT_NOT_REACHED();
 
     return moduleNamespaceObject;
 }

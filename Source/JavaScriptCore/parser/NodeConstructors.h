@@ -186,6 +186,13 @@ namespace JSC {
     {
     }
 
+    inline ImportDeferNode::ImportDeferNode(const JSTokenLocation& location, ExpressionNode* expr, ExpressionNode* option)
+        : ExpressionNode(location)
+        , m_expr(expr)
+        , m_option(option)
+    {
+    }
+
     inline MetaPropertyNode::MetaPropertyNode(const JSTokenLocation& location)
         : ExpressionNode(location)
     {

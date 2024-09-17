@@ -257,14 +257,14 @@ JSValue linkAndEvaluateModule(JSGlobalObject* globalObject, const Identifier& mo
     return globalObject->moduleLoader()->linkAndEvaluateModule(globalObject, identifierToJSValue(vm, moduleKey), scriptFetcher);
 }
 
-JSInternalPromise* importModule(JSGlobalObject* globalObject, const Identifier& moduleName, JSValue referrer, JSValue parameters, JSValue scriptFetcher)
+JSInternalPromise* importModule(JSGlobalObject* globalObject, const Identifier& moduleName, JSValue referrer, JSValue phase, JSValue parameters, JSValue scriptFetcher)
 {
     VM& vm = globalObject->vm();
     JSLockHolder lock(vm);
     RELEASE_ASSERT(vm.atomStringTable() == Thread::current().atomStringTable());
     RELEASE_ASSERT(!vm.isCollectorBusyOnCurrentThread());
 
-    return globalObject->moduleLoader()->requestImportModule(globalObject, moduleName, referrer, parameters, scriptFetcher);
+    return globalObject->moduleLoader()->requestImportModule(globalObject, moduleName, referrer, phase, parameters, scriptFetcher);
 }
 
 UncheckedKeyHashMap<RefPtr<UniquedStringImpl>, String> retrieveImportAttributesFromDynamicImportOptions(JSGlobalObject* globalObject, JSValue options, const Vector<RefPtr<UniquedStringImpl>>& supportedImportAttributes)

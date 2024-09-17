@@ -615,7 +615,7 @@ async function loadAndEvaluateModule(moduleName, parameters, fetcher)
 }
 
 @visibility=PrivateRecursive
-async function requestImportModule(moduleName, referrer, parameters, fetcher)
+async function requestImportModule(moduleName, referrer, phase, parameters, fetcher)
 {
     "use strict";
 
@@ -624,8 +624,11 @@ async function requestImportModule(moduleName, referrer, parameters, fetcher)
         await importMap;
     var key = this.resolve(moduleName, referrer, fetcher);
     var entry = await this.requestSatisfy(this.ensureRegistered(key), parameters, fetcher, new @Set);
-    await this.linkAndEvaluateModule(entry.key, fetcher);
-    return this.getModuleNamespaceObject(entry.module, "evaluation");
+    if (phase === @ModulePhaseEvaluation)
+        await this.linkAndEvaluateModule(entry.key, fetcher);
+    else
+        this.link(entry, fetcher);
+    return this.getModuleNamespaceObject(entry.module, phase);
 }
 
 @visibility=PrivateRecursive

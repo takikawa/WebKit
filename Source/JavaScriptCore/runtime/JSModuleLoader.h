@@ -55,6 +55,11 @@ public:
         Ready,
     };
 
+    enum Phase {
+        Defer = 1,
+        Evaluation,
+    };
+
     static JSModuleLoader* create(JSGlobalObject* globalObject, VM& vm, Structure* structure)
     {
         JSModuleLoader* object = new (NotNull, allocateCell<JSModuleLoader>(vm)) JSModuleLoader(vm, structure);
@@ -71,10 +76,10 @@ public:
     JSInternalPromise* loadAndEvaluateModule(JSGlobalObject*, JSValue moduleName, JSValue parameters, JSValue scriptFetcher);
     JSInternalPromise* loadModule(JSGlobalObject*, JSValue moduleName, JSValue parameters, JSValue scriptFetcher);
     JSValue linkAndEvaluateModule(JSGlobalObject*, JSValue moduleKey, JSValue scriptFetcher);
-    JSInternalPromise* requestImportModule(JSGlobalObject*, const Identifier&, JSValue referrer, JSValue parameters, JSValue scriptFetcher);
+    JSInternalPromise* requestImportModule(JSGlobalObject*, const Identifier&, JSValue referrer, JSValue phase, JSValue parameters, JSValue scriptFetcher);
 
     // Platform dependent hooked APIs.
-    JSInternalPromise* importModule(JSGlobalObject*, JSString* moduleName, JSValue parameters, const SourceOrigin& referrer);
+    JSInternalPromise* importModule(JSGlobalObject*, JSString* moduleName, JSValue phase, JSValue parameters, const SourceOrigin& referrer);
     Identifier resolve(JSGlobalObject*, JSValue name, JSValue referrer, JSValue scriptFetcher);
     JSInternalPromise* fetch(JSGlobalObject*, JSValue key, JSValue parameters, JSValue scriptFetcher);
     JSObject* createImportMetaProperties(JSGlobalObject*, JSValue key, JSModuleRecord*, JSValue scriptFetcher);

@@ -188,6 +188,12 @@ public:
         setExceptionLocation(node, start, divot, end);
         return node;
     }
+    ExpressionNode* createImportDeferExpr(const JSTokenLocation& location, ExpressionNode* expr, ExpressionNode* option, const JSTextPosition& start, const JSTextPosition& divot, const JSTextPosition& end)
+    {
+        auto* node = new (m_parserArena) ImportDeferNode(location, expr, option);
+        setExceptionLocation(node, start, divot, end);
+        return node;
+    }
     ExpressionNode* createNewTargetExpr(const JSTokenLocation location)
     {
         usesNewTarget();

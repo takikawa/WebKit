@@ -657,13 +657,13 @@ JSC::JSValue JSDOMGlobalObject::moduleLoaderEvaluate(JSC::JSGlobalObject* global
     return JSC::jsUndefined();
 }
 
-JSC::JSInternalPromise* JSDOMGlobalObject::moduleLoaderImportModule(JSC::JSGlobalObject* globalObject, JSC::JSModuleLoader* moduleLoader, JSC::JSString* moduleName, JSC::JSValue parameters, const JSC::SourceOrigin& sourceOrigin)
+JSC::JSInternalPromise* JSDOMGlobalObject::moduleLoaderImportModule(JSC::JSGlobalObject* globalObject, JSC::JSModuleLoader* moduleLoader, JSC::JSString* moduleName, JSC::JSValue phase, JSC::JSValue parameters, const JSC::SourceOrigin& sourceOrigin)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
     JSDOMGlobalObject* thisObject = JSC::jsCast<JSDOMGlobalObject*>(globalObject);
     if (auto* loader = scriptModuleLoader(thisObject))
-        RELEASE_AND_RETURN(scope, loader->importModule(globalObject, moduleLoader, moduleName, parameters, sourceOrigin));
+        RELEASE_AND_RETURN(scope, loader->importModule(globalObject, moduleLoader, moduleName, phase, parameters, sourceOrigin));
     JSC::JSInternalPromise* promise = JSC::JSInternalPromise::create(vm, globalObject->internalPromiseStructure());
     scope.release();
     promise->reject(globalObject, jsUndefined());
