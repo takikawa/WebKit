@@ -149,13 +149,12 @@ bool JSModuleNamespaceObject::getOwnPropertySlotCommon(JSGlobalObject* globalObj
 
     slot.setIsTaintedByOpaqueObject();
 
+    auto iterator = m_exports.find(propertyName.uid());
     // FIXME: should this go before or after the setIsTaintedByOpaqueObject?
-    if (m_isDeferred) {
+    if (m_isDeferred && propertyName != vm.propertyNames->builtinNames().thenPublicName() && iterator != m_exports.end()) {
         ensureDeferredNamespaceEvaluation(globalObject);
         RETURN_IF_EXCEPTION(scope, false);
     }
-
-    auto iterator = m_exports.find(propertyName.uid());
     if (iterator == m_exports.end())
         return false;
     ExportEntry& exportEntry = iterator->value;
