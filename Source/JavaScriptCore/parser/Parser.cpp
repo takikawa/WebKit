@@ -3698,13 +3698,19 @@ template <class TreeBuilder> TreeStatement Parser<LexerType>::parseImportDeclara
     if (matchSpecIdentifier()) {
         if (matchContextualKeyword(m_vm.propertyNames->deferKeyword)) {
             // import defer NameSpaceImport FromClause ;
+            // import defer FromClause ;
+            JSTokenLocation deferLocation(tokenLocation());
             next();
-            failIfFalse(match(TIMES), "Cannot parse the namespace import");
-            auto specifier = parseImportClauseItem(context, ImportSpecifierType::NamespaceImport);
-            failIfFalse(specifier, "Cannot parse the namespace import");
-            context.appendImportSpecifier(specifierList, specifier);
+            if (match(TIMES)) {
+                auto specifier = parseImportClauseItem(context, ImportSpecifierType::NamespaceImport);
+                failIfFalse(specifier, "Cannot parse the namespace import");
+                context.appendImportSpecifier(specifierList, specifier);
+                type = ImportDeclarationNode::ImportType::Deferred;
+            } else {
+                auto specifier = context.createImportSpecifier(deferLocation, m_vm.propertyNames->defaultKeyword, m_vm.propertyNames->deferKeyword);
+                context.appendImportSpecifier(specifierList, specifier);
+            }
             isFinishedParsingImport = true;
-            type = ImportDeclarationNode::ImportType::Deferred;
         } else {
             // ImportedDefaultBinding :
             // ImportedBinding
