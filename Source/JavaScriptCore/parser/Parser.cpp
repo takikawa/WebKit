@@ -5328,7 +5328,7 @@ template <class TreeBuilder> TreeExpression Parser<LexerType>::parseMemberExpres
                 isDeferred = true;
                 next();
             } else {
-                failIfTrue(match(IDENT), "\"import.\" can only be followed with meta or defer");
+                failIfTrue(match(IDENT), "\"import.\" can only be followed with meta");
                 failDueToUnexpectedToken();
             }
         }
