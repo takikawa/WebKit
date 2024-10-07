@@ -1,3 +1,4 @@
+//@ requireOptions("--useImportDefer=1")
 import { shouldBe } from "./resources/assert.js"
 
 var global = (Function("return this"))();

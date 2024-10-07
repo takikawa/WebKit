@@ -3696,7 +3696,7 @@ template <class TreeBuilder> TreeStatement Parser<LexerType>::parseImportDeclara
 
     bool isFinishedParsingImport = false;
     if (matchSpecIdentifier()) {
-        if (matchContextualKeyword(m_vm.propertyNames->deferKeyword)) {
+        if (Options::useImportDefer() && matchContextualKeyword(m_vm.propertyNames->deferKeyword)) {
             // import defer NameSpaceImport FromClause ;
             // import defer FromClause ;
             JSTokenLocation deferLocation(tokenLocation());
@@ -5324,7 +5324,7 @@ template <class TreeBuilder> TreeExpression Parser<LexerType>::parseMemberExpres
                 currentScope()->setUsesImportMeta();
                 isImportCall = false;
                 next();
-            } else if (matchContextualKeyword(m_vm.propertyNames->builtinNames().deferPublicName())) {
+            } else if (Options::useImportDefer() && matchContextualKeyword(m_vm.propertyNames->builtinNames().deferPublicName())) {
                 isDeferred = true;
                 next();
             } else {
@@ -5350,8 +5350,10 @@ template <class TreeBuilder> TreeExpression Parser<LexerType>::parseMemberExpres
             consumeOrFail(CLOSEPAREN, "import call expects one or two arguments");
             if (!isDeferred)
                 base = context.createImportExpr(location, expr, optionExpression, expressionStart, expressionEnd, lastTokenEndPosition());
-            else
+            else {
+                ASSERT(Options::useImportDefer());
                 base = context.createImportDeferExpr(location, expr, optionExpression, expressionStart, expressionEnd, lastTokenEndPosition());
+            }
         }
     } else {
         const bool isAsync = matchContextualKeyword(m_vm.propertyNames->async);

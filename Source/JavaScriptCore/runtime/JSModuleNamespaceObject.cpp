@@ -123,6 +123,7 @@ void JSModuleNamespaceObject::ensureDeferredNamespaceEvaluation(JSGlobalObject* 
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
+    ASSERT(Options::useImportDefer());
     ASSERT(m_isDeferred);
     if (JSModuleRecord* jsModule = jsDynamicCast<JSModuleRecord*>(moduleRecord()); jsModule && !jsModule->readyForSyncExecution(globalObject)) {
         throwTypeError(globalObject, scope, "FIXME"_s);
