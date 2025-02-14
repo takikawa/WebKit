@@ -40,6 +40,7 @@
 #include "JSImmutableButterfly.h"
 #include "JSIteratorHelper.h"
 #include "JSMapIterator.h"
+#include "JSModuleLoader.h"
 #include "JSPromise.h"
 #include "JSRegExpStringIterator.h"
 #include "JSSetIterator.h"
@@ -228,11 +229,26 @@ RegisterID* SuperNode::emitBytecode(BytecodeGenerator& generator, RegisterID* ds
 RegisterID* ImportNode::emitBytecode(BytecodeGenerator& generator, RegisterID* dst)
 {
     RefPtr<RegisterID> importModule = generator.moveLinkTimeConstant(nullptr, LinkTimeConstant::importModule);
-    CallArguments arguments(generator, nullptr, m_option ? 2 : 1);
+    CallArguments arguments(generator, nullptr, m_option ? 3 : 2);
     generator.emitLoad(arguments.thisRegister(), jsUndefined());
     generator.emitNode(arguments.argumentRegister(0), m_expr);
+    generator.emitLoad(arguments.argumentRegister(1), jsNumber(static_cast<unsigned>(JSModuleLoader::Phase::Evaluation)));
     if (m_option)
-        generator.emitNode(arguments.argumentRegister(1), m_option);
+        generator.emitNode(arguments.argumentRegister(2), m_option);
+    return generator.emitCall(generator.finalDestination(dst, importModule.get()), importModule.get(), NoExpectedFunction, arguments, divot(), divotStart(), divotEnd(), DebuggableCall::No);
+}
+
+// ------------------------------ ImportDeferNode -------------------------------------
+
+RegisterID* ImportDeferNode::emitBytecode(BytecodeGenerator& generator, RegisterID* dst)
+{
+    RefPtr<RegisterID> importModule = generator.moveLinkTimeConstant(nullptr, LinkTimeConstant::importModule);
+    CallArguments arguments(generator, nullptr, m_option ? 3 : 2);
+    generator.emitLoad(arguments.thisRegister(), jsUndefined());
+    generator.emitNode(arguments.argumentRegister(0), m_expr);
+    generator.emitLoad(arguments.argumentRegister(1), jsNumber(static_cast<unsigned>(JSModuleLoader::Phase::Defer)));
+    if (m_option)
+        generator.emitNode(arguments.argumentRegister(2), m_option);
     return generator.emitCall(generator.finalDestination(dst, importModule.get()), importModule.get(), NoExpectedFunction, arguments, divot(), divotStart(), divotEnd(), DebuggableCall::No);
 }
 

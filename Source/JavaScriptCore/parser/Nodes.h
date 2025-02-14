@@ -207,6 +207,7 @@ namespace JSC {
         virtual bool isSpreadExpression() const { return false; }
         virtual bool isSuperNode() const { return false; }
         virtual bool isImportNode() const { return false; }
+        virtual bool isImportDeferNode() const { return false; }
         virtual bool isMetaProperty() const { return false; }
         virtual bool isNewTarget() const { return false; }
         virtual bool isImportMeta() const { return false; }
@@ -632,6 +633,18 @@ namespace JSC {
 
     private:
         bool isImportNode() const final { return true; }
+        RegisterID* emitBytecode(BytecodeGenerator&, RegisterID* = nullptr) final;
+
+        ExpressionNode* m_expr;
+        ExpressionNode* m_option;
+    };
+
+    class ImportDeferNode final : public ExpressionNode, public ThrowableExpressionData {
+    public:
+        ImportDeferNode(const JSTokenLocation&, ExpressionNode*, ExpressionNode*);
+
+    private:
+        bool isImportDeferNode() const final { return true; }
         RegisterID* emitBytecode(BytecodeGenerator&, RegisterID* = nullptr) final;
 
         ExpressionNode* m_expr;

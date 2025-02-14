@@ -144,7 +144,7 @@ Identifier JSAPIGlobalObject::moduleLoaderResolve(JSGlobalObject* globalObject, 
     return { };
 }
 
-JSInternalPromise* JSAPIGlobalObject::moduleLoaderImportModule(JSGlobalObject* globalObject, JSModuleLoader*, JSString* specifierValue, JSValue parameters, const SourceOrigin& sourceOrigin)
+JSInternalPromise* JSAPIGlobalObject::moduleLoaderImportModule(JSGlobalObject* globalObject, JSModuleLoader*, JSString* specifierValue, JSValue phase, JSValue parameters, const SourceOrigin& sourceOrigin)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -154,7 +154,7 @@ JSInternalPromise* JSAPIGlobalObject::moduleLoaderImportModule(JSGlobalObject* g
     };
 
     auto import = [&] (const String& specifier, JSValue parameters) {
-        auto result = importModule(globalObject, Identifier::fromString(vm, specifier), jsString(vm, sourceOrigin.url().string()), parameters, jsUndefined());
+        auto result = importModule(globalObject, Identifier::fromString(vm, specifier), jsString(vm, sourceOrigin.url().string()), phase, parameters, jsUndefined());
         RETURN_IF_EXCEPTION(scope, reject(scope));
         return result;
     };
@@ -287,7 +287,7 @@ JSValue JSAPIGlobalObject::loadAndEvaluateJSScriptModule(const JSLockHolder&, JS
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     Identifier key = Identifier::fromString(vm, String { [[script sourceURL] absoluteString] });
-    JSInternalPromise* promise = importModule(this, key, jsUndefined(), jsUndefined(), jsUndefined());
+    JSInternalPromise* promise = importModule(this, key, jsUndefined(), jsNumber(static_cast<int32_t>(JSModuleLoader::Phase::Evaluation)), jsUndefined(), jsUndefined());
     RETURN_IF_EXCEPTION(scope, { });
     auto* result = JSPromise::create(vm, this->promiseStructure());
     result->resolve(this, promise);
